@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Violation Monitoring System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+            margin-left: 220px; /* space for sidebar */
+            color: #333;
+        }
+
+        /* Dashboard-style Header */
+        .dashboard-header {
+            background: linear-gradient(135deg, #063d61, #2c3e50);
+            color: white;
+           
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .dashboard-header i {
+            margin-right: 15px;
+            font-size: 1.6rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 230px;
+            padding-top: 20px;
+            transition: 0.3s;
+            overflow-y: auto;
+            z-index: 1000;
+            background: #2c3e50;
+            color: white;
+        }
+
+        .sidebar h3 {
+            text-align: center;
+            padding-bottom: 10px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .sidebar a {
+            display: block;
+            color: #dfe6e9;
+            padding: 12px 20px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #f8d210;
+            border-left: 4px solid #f8d210;
+        }
+
+        /* Other styles */
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+        }
+        
+        .violation-img {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .violation-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        
+        .badge-helmet {
+            background-color: var(--danger-color);
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+        
+        .badge-overloading {
+            background-color: var(--warning-color);
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+            border-color: #219653;
+        }
+        
+        .filter-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card.total {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+        }
+        
+        .stat-card.helmet {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .stat-card.overloading {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .table th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .table td {
+            vertical-align: middle;
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .logo {
+            height: 40px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h2>Safe Rides</h2>
+        <a href="{{ url_for('index') }}" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+        <a href="/view_violations"><i class="fas fa-list me-2"></i>Violation Logs</a>
+        <a href="/violation_reports"><i class="fas fa-file-alt me-2"></i>View Reports</a>
+        <a href="/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+        <a href="/logout"><i class="fas fa-sign-out me-2"></i>logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container pt-3">
+        <!-- Dashboard-style Header -->
+        <div class="dashboard-header ">
+            <i class="fas fa-traffic-light "></i>
+            <div>Traffic Violation Records</div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card total">
+                    <i class="fas fa-chart-line"></i>
+                    <h3 id="totalViolations">0</h3>
+                    <p>Total Violations</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card helmet">
+                    <i class="fas fa-helmet-safety"></i>
+                    <h3 id="helmetViolations">0</h3>
+                    <p>Helmet Violations</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card overloading">
+                    <i class="fas fa-motorcycle"></i>
+                    <h3 id="overloadingViolations">0</h3>
+                    <p>Overloading Violations</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rest of your content remains exactly the same -->
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="dateFrom" class="form-label">From Date</label>
+                        <input type="date" id="dateFrom" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="dateTo" class="form-label">To Date</label>
+                        <input type="date" id="dateTo" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="violationTypeFilter" class="form-label">Violation Type</label>
+                        <select id="violationTypeFilter" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="Helmet">Helmet Violation</option>
+                            <option value="Overloading">Overloading Violation</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="cameraFilter" class="form-label">Camera</label>
+                        <select id="cameraFilter" class="form-select">
+                            <option value="">All Cameras</option>
+                            <option value="cam1">Camera 1</option>
+                            <option value="cam2">Camera 2</option>
+                            <option value="cam3">Camera 3</option>
+                            <option value="cam4">Camera 4</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="plateSearch" class="form-label">Search License Plate</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="plateSearch" class="form-control" placeholder="Enter license plate number...">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-sync-alt"></i> Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Violations Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> Violation Records</h5>
+            </div>
+            <div class="card-body">
+                <table id="violationsTable" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Camera</th>
+                            <th>License Plate</th>
+                            <th>Violation Type</th>
+                            <th>Time</th>
+                            <th>Image</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="fas fa-image"></i> Violation Evidence</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" class="modal-img" alt="Violation Image">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="downloadImageBtn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            const table = $('#violationsTable').DataTable({
+                ajax: {
+                    url: '/all_violations',
+                    dataSrc: '',
+                    dataFilter: function(data) {
+                        const json = JSON.parse(data);
+                        updateStats(json);
+                        return JSON.stringify(json);
+                    }
+                },
+                columns: [
+                    { data: 'id', className: 'fw-bold' },
+                    { 
+                        data: 'camera',
+                        render: function(data) {
+                            return data ? `<span class="badge bg-dark">${data.toUpperCase()}</span>` : 'N/A';
+                        }
+                    },
+                    { 
+                        data: 'plate',
+                        render: function(data) {
+                            return data ? `<span class="badge bg-primary">${data}</span>` : '<span class="text-muted">UNKNOWN</span>';
+                        }
+                    },
+                    { 
+                        data: 'violation_type',
+                        render: function(data) {
+                            const badgeClass = data.includes('Helmet') ? 'badge-helmet' : 'badge-overloading';
+                            return `<span class="badge ${badgeClass}"><i class="fas ${data.includes('Helmet') ? 'fa-helmet-safety' : 'fa-users'}"></i> ${data}</span>`;
+                        }
+                    },
+                    { 
+                        data: 'time',
+                        render: function(data) {
+                            return `<span class="text-nowrap">${data}</span>`;
+                        }
+                    },
+                    { 
+                        data: 'image',
+                        render: function(data) {
+                            return `
+                                <div class="position-relative">
+                                    <img src="${data}" class="violation-img" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('${data}')">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        <i class="fas fa-camera"></i>
+                                    </span>
+                                </div>
+                            `;
+                        },
+                        orderable: false
+                    },
+                    {
+                        data: null,
+                        className: 'action-buttons',
+                        render: function(data) {
+                            return `
+                                <div class="d-flex flex-wrap">
+                                    <a href="/challan/${data.camera}/${data.id}" class="btn btn-sm btn-primary me-1 mb-1" target="_blank">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="/download_challan/${data.camera}/${data.id}" class="btn btn-sm btn-success mb-1">
+                                        <i class="fas fa-download"></i> PDF
+                                    </a>
+                                    <a href="/send_sms/${data.camera}/${data.id}" class="btn btn-sm btn-warning mb-1">
+                <i class="fas fa-sms"></i> SMS
+            </a>
+                                </div>
+                            `;
+                        },
+                        orderable: false
+                    }
+                ],
+                order: [[4, 'desc']], // Sort by time descending
+                responsive: true,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "Showing 0 to 0 of 0 entries",
+                    infoFiltered: "(filtered from _MAX_ total entries)",
+                    zeroRecords: "No matching records found",
+                    paginate: {
+                        first: "<i class='fas fa-angle-double-left'></i>",
+                        last: "<i class='fas fa-angle-double-right'></i>",
+                        next: "<i class='fas fa-angle-right'></i>",
+                        previous: "<i class='fas fa-angle-left'></i>"
+                    }
+                },
+                dom: '<"top"<"row"<"col-md-6"l><"col-md-6"f>>>rt<"bottom"<"row"<"col-md-6"i><"col-md-6"p>>>'
+            });
+
+            // Set today's date as default filter
+            const today = new Date().toISOString().split('T')[0];
+            $('#dateFrom').val(today);
+            $('#dateTo').val(today);
+
+            // Filter by date range
+            $('#dateFrom, #dateTo').change(function() {
+                table.draw();
+            });
+
+            // Filter by violation type
+            $('#violationTypeFilter').change(function() {
+                table.draw();
+            });
+
+            // Filter by camera
+            $('#cameraFilter').change(function() {
+                table.draw();
+            });
+
+            // Search by license plate
+            $('#plateSearch').keyup(function() {
+                table.search(this.value).draw();
+            });
+
+            // Reset all filters
+            $('#resetFilters').click(function() {
+                $('#dateFrom').val(today);
+                $('#dateTo').val(today);
+                $('#violationTypeFilter').val('');
+                $('#cameraFilter').val('');
+                $('#plateSearch').val('');
+                table.search('').draw();
+            });
+
+            // Download image button in modal
+            $('#downloadImageBtn').click(function() {
+                const imageSrc = $('#modalImage').attr('src');
+                if (imageSrc) {
+                    const link = document.createElement('a');
+                    link.href = imageSrc;
+                    link.download = 'violation_' + new Date().getTime() + '.jpg';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+
+            // Custom filtering function
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                    const dateFrom = $('#dateFrom').val();
+                    const dateTo = $('#dateTo').val();
+                    const violationType = $('#violationTypeFilter').val();
+                    const camera = $('#cameraFilter').val();
+                    
+                    // Since our time format is HH-MM-SS, we'll assume all records are from today
+                    const rowDate = today;
+                    
+                    // Check date range (not fully implemented since we don't have dates)
+                    if (dateFrom && rowDate < dateFrom) return false;
+                    if (dateTo && rowDate > dateTo) return false;
+                    
+                    // Check violation type
+                    if (violationType && !data[3].includes(violationType)) return false;
+                    
+                    // Check camera
+                    if (camera && data[1].toLowerCase() !== camera.toLowerCase()) return false;
+                    
+                    return true;
+                }
+            );
+        });
+
+        function showImage(src) {
+            $('#modalImage').attr('src', src);
+        }
+        
+        function updateStats(data) {
+            // Update statistics cards
+            $('#totalViolations').text(data.length);
+            
+            const helmetViolations = data.filter(v => v.violation_type.includes('Helmet')).length;
+            const overloadingViolations = data.filter(v => v.violation_type.includes('Overloading')).length;
+            
+            $('#helmetViolations').text(helmetViolations);
+            $('#overloadingViolations').text(overloadingViolations);
+        }
+    </script>
+</body>
+</html>

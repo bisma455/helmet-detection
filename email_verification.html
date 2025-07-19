@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Your Registration</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .qr-code { text-align: center; margin: 20px 0; }
+        .manual-entry { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Complete Your Registration</h2>
+        <p>Hello {{ username }},</p>
+        <p>Please scan the QR code below with your authenticator app:</p>
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="2FA QR Code" style="width: 200px;">
+        </div>
+        
+        <div class="manual-entry">
+            <p>If you can't scan the QR code, manually enter this key:</p>
+            <p><strong>{{ secret_key }}</strong></p>
+            <p>After setup, return to the website to enter your verification code.</p>
+        </div>
+    </div>
+</body>
+</html>

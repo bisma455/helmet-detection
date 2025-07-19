@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Based Helmet and Two Wheeler Rider Violation Detection System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Global Styling */
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', sans-serif;
+      color: #333;
+    }
+    /* Alert Styles */
+    .alert-violation {
+        border-radius: 10px;
+        border-left: 4px solid #e74c3c;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .alert-violation:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    /* Animation for new alerts */
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .alert {
+        animation: slideIn 0.3s ease-out forwards;
+        margin-bottom: 15px;
+    }
+
+    /* Sidebar Styling (unchanged) */
+    .sidebar {
+      height: 100vh;
+      width: 250px;
+      position: fixed;
+      background: #2c3e50;
+      color: white;
+      padding-top: 20px;
+      transition: 0.3s;
+      z-index: 1000;
+    }
+    .sidebar h3 {
+      text-align: center;
+      padding-bottom: 10px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .sidebar a {
+      display: block;
+      color: #dfe6e9;
+      padding: 12px 20px;
+      font-size: 1rem;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #f8d210;
+      border-left: 4px solid #f8d210;
+    }
+
+    /* Enhanced Main Content */
+    .main-content {
+      margin-left: 250px;
+      padding: 20px;
+      transition: all 0.3s;
+    }
+    .dashboard-header {
+      background: linear-gradient(135deg, #073e62, #2c3e50);
+      color: white;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .dashboard-header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+    }
+    .dashboard-header i {
+      margin-right: 15px;
+      font-size: 1.6rem;
+    }
+
+    /* Enhanced Card Styling */
+    .card-custom {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      border: none;
+      transition: all 0.4s;
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+      border-top: 3px solid transparent;
+    }
+    .card-custom:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+    .card-custom h6 {
+      color: #7f8c8d;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+    .card-custom h3 {
+      color: #2c3e50;
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+    .card-custom p {
+      color: #95a5a6;
+      font-size: 0.85rem;
+    }
+    .card-custom i {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 2.5rem;
+      opacity: 0.2;
+      transition: all 0.3s;
+    }
+    .card-custom:hover i {
+      opacity: 0.3;
+      transform: scale(1.1);
+    }
+
+    /* Different card accent colors */
+    .card-helmet {
+      border-top-color: #e74c3c;
+    }
+    .card-helmet i {
+      color: #e74c3c;
+    }
+    .card-triple {
+      border-top-color: #f39c12;
+    }
+    .card-triple i {
+      color: #f39c12;
+    }
+    .card-plates {
+      border-top-color: #27ae60;
+    }
+    .card-plates i {
+      color: #27ae60;
+    }
+
+    /* Enhanced Video Containers */
+    .video-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
+
+    .video-box {
+      background-color: white;
+      border: none;
+      padding: 0;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .video-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .video-box h3 {
+      margin: 0;
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #04314f, #2980b9);
+      color: white;
+      font-size: 1.1rem;
+    }
+
+    .video-box img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .violations {
+      list-style: none;
+      padding: 15px;
+      margin: 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .violations::-webkit-scrollbar {
+      width: 6px;
+    }
+    .violations::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .violations::-webkit-scrollbar-thumb {
+      background: #bdc3c7;
+      border-radius: 10px;
+    }
+    .violations::-webkit-scrollbar-thumb:hover {
+      background: #95a5a6;
+    }
+
+    .violations li {
+      background-color: #f8f9fa;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .violations li:hover {
+      background-color: #e9f5ff;
+      border-left-color: #3498db;
+    }
+
+    .violation-header {
+      padding: 12px 20px;
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #2c3e50;
+      border-bottom: 1px solid #eee;
+    }
+
+    .violation-info {
+      margin-bottom: 8px;
+    }
+
+    .violation-type {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .violation-time {
+      color: #3498db;
+    }
+
+    .violation-date {
+      color: #9b59b6;
+    }
+
+    .triple-riding {
+      background-color: #fff3e0 !important;
+      border-left-color: #f39c12 !important;
+    }
+
+    img.violation-img {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin: 8px 0;
+      border: 1px solid #eee;
+    }
+
+    .video-box button {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 5px;
+      width: 100%;
+    }
+    .video-box button:hover {
+      background: linear-gradient(135deg, #27ae60, #219653);
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
+    }
+
+    /* Counter animations */
+    .counter-pulse {
+      animation: pulse 1s ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* Loading animation for video feeds */
+    @keyframes shimmer {
+      0% { background-position: -468px 0 }
+      100% { background-position: 468px 0 }
+    }
+    .video-loading {
+      animation: shimmer 1.5s infinite linear;
+      background: linear-gradient(to right, #f6f7f8 0%, #e9ebee 20%, #f6f7f8 40%, #f6f7f8 100%);
+      background-size: 800px 104px;
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="sidebar">
+    <h2>Safe Rides</h2>
+    <a href="{{ url_for('index') }}" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+    <a href="/view_violations"><i class="fas fa-list me-2"></i>Violation Logs</a>
+    <a href="/violation_reports"><i class="fas fa-file-alt me-2"></i>View Reports</a>
+    <a href="/notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
+    <a href="/logout"><i class="fas fa-sign-out me-2"></i>logout</a>
+    <a href="/download_page"><i class="fas fa-user me-2"></i>User</a>
+  </div>
+<div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100; width: 350px;">
+  </div>
+    <div class="main-content">
+       <div class="dashboard-header">
+      <i class="fas fa-motorcycle"></i>
+      <div>IoT Based Helmet and Two Wheeler Rider Violation Detection System</div>
+    </div>
+
+       <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card-custom text-center card-helmet">
+          <i class="fas fa-helmet-safety"></i>
+          <h6>HELMET VIOLATIONS</h6>
+          <h3 id="helmet-violations">0</h3>
+          <p>Last 24 Hours</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-custom text-center card-triple">
+          <i class="fas fa-users"></i>
+          <h6>TRIPLE RIDING</h6>
+          <h3 id="triple-riding">0</h3>
+          <p>Last 24 Hours</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-custom text-center card-plates">
+          <i class="fas fa-car"></i>
+          <h6>PLATES DETECTED</h6>
+          <h3 id="plates-detected">0</h3>
+          <p>Last 24 Hours</p>
+        </div>
+      </div>
+    </div>
+
+        <div class="video-container">
+      
+      <div class="video-box">
+        <h3><i class="fas fa-wifi"></i> ESP32-CAM LIVE FEED</h3>
+        <img src="{{ url_for('video_feed_esp') }}" width="100%" height="240" class="video-loading" onload="this.classList.remove('video-loading')">
+        <div class="video-status online" id="esp-status">
+          <i class="fas fa-circle"></i> <span>Streaming Online</span>
+        </div>
+        <div class="violation-header">
+          <i class="fas fa-exclamation-triangle"></i> RECENT VIOLATIONS
+        </div>
+        <ul id="violations-esp" class="violations">
+          <li>Loading violations...</li>
+        </ul>
+      </div>
+      
+      
+      {% for cam_id in ['cam2', 'cam3', 'cam4'] %}
+      <div class="video-box">
+        <h3><i class="fas fa-video"></i> {{ cam_id.upper() }}</h3>
+        <img src="{{ url_for('video_feed', cam_id=cam_id) }}" width="100%" height="240" class="video-loading" onload="this.classList.remove('video-loading')">
+        <div class="violation-header">
+          <i class="fas fa-exclamation-triangle"></i> RECENT VIOLATIONS
+        </div>
+        <ul id="violations-{{ cam_id }}" class="violations">
+          <li>Loading violations...</li>
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+        const violationCounts = {
+        helmet: 0,
+        triple: 0,
+        plates: 0
+    };
+
+        const uniqueViolations = {
+        helmet: new Set(),
+        triple: new Set(),
+        plates: new Set()
+    };
+
+    function updateDashboardCounters() {
+        document.getElementById('helmet-violations').textContent = violationCounts.helmet;
+        document.getElementById('triple-riding').textContent = violationCounts.triple;
+        document.getElementById('plates-detected').textContent = violationCounts.plates;
+    }
+
+    
+    function resetUniqueViolations() {
+        uniqueViolations.helmet.clear();
+        uniqueViolations.triple.clear();
+        uniqueViolations.plates.clear();
+    }
+
+    
+    function processViolation(item) {
+        const violationId = `${item.date}_${item.time}_${item.plate}_${item.violation_type}`;
+        
+        if (item.violation_type.includes('Helmet')) {
+            if (!uniqueViolations.helmet.has(violationId)) {
+                uniqueViolations.helmet.add(violationId);
+                violationCounts.helmet++;
+            }
+        } 
+        else if (item.violation_type.includes('Triple') || item.violation_type.includes('Overloading')) {
+            if (!uniqueViolations.triple.has(violationId)) {
+                uniqueViolations.triple.add(violationId);
+                violationCounts.triple++;
+            }
+        }
+        
+        if (item.plate && item.plate !== 'UNKNOWN') {
+            const plateId = `${item.date}_${item.time}_${item.plate}`;
+            if (!uniqueViolations.plates.has(plateId)) {
+                uniqueViolations.plates.add(plateId);
+                violationCounts.plates++;
+            }
+        }
+    }
+    function checkEspStatus() {
+        fetch('/esp_status')
+            .then(response => response.json())
+            .then(data => {
+                const statusElement = document.getElementById('esp-status');
+                if (data.status === 'online') {
+                    statusElement.className = 'video-status online';
+                    statusElement.innerHTML = '<i class="fas fa-circle"></i> <span>Streaming Online</span>';
+                } else {
+                    statusElement.className = 'video-status offline';
+                    statusElement.innerHTML = '<i class="fas fa-circle"></i> <span>Stream Offline - Reconnecting...</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking ESP status:', error);
+            });
+    }
+
+    // Fetch violation data for a specific camera and update the violation logs
+    function fetchViolations(camId) {
+        fetch('/violations/' + camId)
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('violations-' + camId);
+                list.innerHTML = '';
+                
+                if (data.length === 0) {
+                    list.innerHTML = '<li>No violations yet.</li>';
+                    return;
+                }
+                
+                // Process each violation and display it
+                data.slice(-5).reverse().forEach(item => {
+                    const li = document.createElement('li');
+                    const violationClass = item.violation_type === 'Triple Riding' ? 'triple-riding' : '';
+                    li.innerHTML = `
+                        <div class="violation-info ${violationClass}">
+                            <div><span class="violation-type">Violation Type:</span> ${item.violation_type}</div>
+                            <div><span class="violation-time">Time:</span> ${item.time}</div>
+                            <div><span class="violation-date">Date:</span> ${item.date}</div>
+                            <div><strong>Plate:</strong> ${item.plate || 'UNKNOWN'}</div>
+                        </div>
+                        <img src="${item.image}" width="200" class="violation-img" />
+                        <a href="/download_challan/${camId}/${item.id}">
+                            <button>Download Challan</button>
+                        </a>
+                    `;
+                    list.appendChild(li);
+
+                                        processViolation(item);
+                });
+
+                
+                updateDashboardCounters();
+            })
+            .catch(error => {
+                console.error('Error fetching violations for', camId, ':', error);
+            });
+    }
+
+    
+    function fetchAllViolations() {
+        ['esp', 'cam2', 'cam3', 'cam4'].forEach(fetchViolations);
+    }
+       function setupDailyReset() {
+        const now = new Date();
+        const nextDay = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + 1,
+            0, 0, 0
+        );
+        const timeToReset = nextDay - now;
+        
+        setTimeout(() => {
+            resetUniqueViolations();
+            violationCounts.helmet = 0;
+            violationCounts.triple = 0;
+            violationCounts.plates = 0;
+            updateDashboardCounters();
+            setupDailyReset(); 
+        }, timeToReset);
+    }
+
+        window.onload = function() {
+        fetchAllViolations();
+        setupDailyReset();
+        
+                setInterval(fetchAllViolations, 5000);
+    };
+
+       const socket = io();
+    socket.on('new_notification', function(notification) {
+        
+        const violationItem = {
+            violation_type: notification.type,
+            time: new Date().toLocaleTimeString(),
+            date: new Date().toLocaleDateString(),
+            plate: notification.plate || 'UNKNOWN',
+            image: notification.image || ''
+        };
+        
+        // Process this new violation
+        processViolation(violationItem);
+        updateDashboardCounters();
+        
+        // Visual feedback
+        const counterElement = notification.type.includes('Helmet') ? 
+            document.getElementById('helmet-violations') :
+            document.getElementById('triple-riding');
+            
+        counterElement.classList.add('counter-pulse');
+        setTimeout(() => {
+            counterElement.classList.remove('counter-pulse');
+        }, 1000);
+    });
+    
+    
+    socket.on('new_violation', function(data) {
+        const alertContainer = document.getElementById('alert-container');
+        
+       
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                <div>
+                    <strong>New Violation Detected!</strong>
+                    <div class="mt-1">
+                        <span class="badge bg-dark me-2">${data.camera.toUpperCase()}</span>
+                        <span class="badge bg-primary">${data.plate || 'UNKNOWN'}</span>
+                    </div>
+                    <div class="small mt-1">${data.type} at ${data.time}</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+                alertContainer.prepend(alertDiv);
+        
+      
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);
+        
+                playAlertSound();
+    });
+    
+    function playAlertSound() {
+        const audio = new Audio('/static/alert.mp3');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+
+  </script>
+</body>
+</html>
